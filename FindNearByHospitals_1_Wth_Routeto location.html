@@ -1,0 +1,163 @@
+<html>
+
+    <style>
+        html, body, #map-canvas {
+    height: 100%;
+    margin: 0px;
+    padding: 0px
+    }
+    </style>
+    
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=places"></script>
+    <script>
+        var map;
+        var infowindow;
+        var pyrmont;
+        var LatLng;
+        var type;
+        var directionsService;
+        var directionsDisplay;
+        var loc_latlang;
+        function initialize() {
+                
+            if (navigator.geolocation) {
+
+                    //get current location
+                        pyrmont =  navigator.geolocation.getCurrentPosition(function (p) {
+                        LatLng = new google.maps.LatLng(p.coords.latitude, p.coords.longitude);
+                        var mapOptions = {
+                            center: LatLng,
+                            zoom: 13,
+                            mapTypeId: google.maps.MapTypeId.ROADMAP
+                        };               
+                        map = new google.maps.Map(document.getElementById('map-canvas'), {
+                            center: LatLng,
+                            zoom: 15
+                        });
+                        var marker = new google.maps.Marker({
+                            position: LatLng,
+                            map: map,
+                            title: "<div style = 'height:60px;width:200px'><b>Your location:</b><br />Latitude: " + p.coords.latitude + "<br />Longitude: " + p.coords.longitude
+                        });
+                        google.maps.event.addListener(marker, "click", function (e) {
+                            var infoWindow = new google.maps.InfoWindow();
+                            infoWindow.setContent(marker.title);
+                            infoWindow.open(map, marker);
+
+                            var latitude = e.latLng.lat();
+                            var longitude = e.latLng.lng();
+                            alert( latitude + ', ' + longitude );
+                        });
+
+                // var type = document.getElementById('gmap_type').value;
+                // alert(type);
+
+                var request = {
+                    location: LatLng,
+                    radius: 8046.72,
+                    types: [type] // this is where you set the map to get the hospitals and health related places
+                };
+                infowindow = new google.maps.InfoWindow();
+                var service = new google.maps.places.PlacesService(map);
+                service.nearbySearch(request, callback);
+
+
+                });
+                } else {
+                    alert('Geo Location feature is not supported in this browser.');
+                }
+
+              
+        }       
+
+        function callback(results, status) {
+            if (status == google.maps.places.PlacesServiceStatus.OK) {
+                for (var i = 0; i < results.length; i++) {
+                createMarker(results[i]);
+                }
+            }
+        }
+
+        function createMarker(place) {
+        var placeLoc = place.geometry.location;
+        var marker = new google.maps.Marker({
+            map: map,
+            position: place.geometry.location
+        });
+
+        google.maps.event.addListener(marker, 'click', function(e) {
+            infowindow.setContent(place.name);
+            infowindow.open(map, this);
+
+            var latitude = e.latLng.lat();
+            var longitude = e.latLng.lng();
+
+            loc_latlang = new google.maps.LatLng(e.latLng.lat(), e.latLng.lng());
+            // alert( loc_latlang );
+
+            // alert('Hi yaaro');
+
+
+            //for showing directions
+            directionsService = new google.maps.DirectionsService;
+            directionsDisplay = new google.maps.DirectionsRenderer;
+            directionsDisplay.setMap(map);
+            
+            // to display actual route
+            calculateAndDisplayRoute(directionsService, directionsDisplay);
+
+            calculateAndDisplayDistance(LatLng, loc_latlang);
+
+        });
+        }
+        google.maps.event.addDomListener(window, 'load', initialize);
+        
+
+        //call this on dropdown change event
+        function func(){
+            //code to retain the drop down changed value
+            var e = document.getElementById("gmap_type");
+            type = e.options[e.selectedIndex].text;
+            initialize(); //recall initialize for dropdown change            
+            //alert(type);
+        }
+
+        function calculateAndDisplayRoute(directionsService, directionsDisplay) {
+            //alert(LatLng)
+            directionsService.route({
+                origin: LatLng, 
+                destination: loc_latlang,
+                travelMode: 'DRIVING'
+                }, function(response, status) {
+                if (status === 'OK') {
+                    directionsDisplay.setDirections(response);
+                } else {
+                    window.alert('Directions request failed due to ' + status);
+                }
+            });
+      }
+
+      function calculateAndDisplayDistance(LatLng ,loc_latlang){
+          alert("Here in distance");          
+          alert(google.maps.geometry.spherical.computeDistanceBetween(LatLng, loc_latlang));
+          return (google.maps.geometry.spherical.computeDistanceBetween(LatLng, loc_latlang));
+      }
+
+    </script>
+
+<form name="locations">
+    <div id="map-canvas" class="gmap"></div>
+
+    <select id="gmap_type" name="location_type" onchange="func()" >
+        <option value="art_gallery">art_gallery</option>
+        <option value="atm">atm</option>
+        <option value="bank">bank</option>
+        <option value="bar">bar</option>
+        <option value="cafe">cafe</option>
+        <option value="food">food</option>
+        <option value="hospital">hospital</option>
+        <option value="police">police</option>
+        <option value="store">store</option>
+    </select>
+</form>
+</html>

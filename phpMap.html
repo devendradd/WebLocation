@@ -1,0 +1,60 @@
+<?php
+ 
+  include './DeviceAtlasCloud/Api/Client.php';
+ 
+  // Call static method and get back the device properties
+  $results = DeviceAtlasCloudClient::getDeviceData();
+  $properties = $results[DeviceAtlasCloudClient::KEY_PROPERTIES];
+ 
+  $is_high_end = isHighEnd($properties);
+ 
+  if (isset($properties['mobileDevice']) && $properties['mobileDevice']) {
+    $display_width = $properties['displayWidth'];
+  }
+ 
+  function isHighEnd($properties) {  
+    //tablets, desktop browsers assumed highend
+    if($properties['primaryHardwareType']=='Desktop'||$properties['primaryHardwareType']=='Tablet') {
+      return true; 
+    }
+ 
+    $engine = $properties['browserRenderingEngine'];
+    $engine_list = array('WebKit', 'Blink', 'Gecko', 'Trident', 'UCWeb');
+ 
+    if(in_array($engine, $engine_list)) {
+      return true;
+    }
+ 
+    return false;
+  }
+?>
+<html>
+<?php 
+  // Use Google Maps API for high-end device
+  if($is_high_end) { ?>
+    <script src="https://maps.googleapis.com/maps/api/js"></script>
+    <div id="map"></div>
+    <script>
+      function map_init() {
+        var map_options = {
+          center: new google.maps.LatLng(52.516284,13.377678),
+          zoom: 15,
+          mapTypeId: google.maps.MapTypeId.ROADMAP
+        }
+       
+        map_canvas = document.getElementById('map');
+        var map = new google.maps.Map(map_canvas, map_options);
+      }
+ 
+      google.maps.event.addDomListener(window, 'load', map_init);
+    </script>
+ 
+<?php  } 
+  //Use static map
+  else { ?>
+      <div id="map">
+        <img width="100%" src="https://maps.googleapis.com/maps/api/staticmap?center=52.516284,13.377678&zoom=13&size=200x200" />
+      </div>
+<?php  } ?>
+ 
+</html>

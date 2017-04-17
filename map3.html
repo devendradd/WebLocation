@@ -1,0 +1,42 @@
+<script src="http://maps.googleapis.com/maps/api/js"></script>
+<script type="text/javascript">
+    function initialize(position, accuracy) {
+      var latlng = position || new google.maps.LatLng(50.45, 4.45);    // set your own default location.  This gets called if the parameters are left blank.
+      var myOptions = {
+        zoom: 15,
+        center: latlng
+      };
+      var map = new google.maps.Map(document.getElementById("map-canvas"), myOptions);
+      if (position) {
+        var marker = new google.maps.Marker({
+            position: latlng, 
+            map: map, 
+            title: "You are here! (at least within a " + accuracy + " meter radius)"
+        });
+      }
+      else {
+        // position of the user not found
+      }
+    }
+    function locationFound(position) {
+      initialize( 
+        new google.maps.LatLng(position.coords.latitude, position.coords.longitude),
+        position.coords.accuracy
+      );
+    }
+    function locationNotFound() {
+      initialize(null, null);
+    }
+    function page_loaded() {
+      // the page is loaded, we can send a request to search for the location of the user
+      navigator.geolocation.getCurrentPosition(locationFound, locationNotFound);
+    }
+    google.maps.event.addDomListener(window, 'load', page_loaded);
+</script>
+<style>
+#map-canvas {
+  width: 500px;
+  height: 400px;
+}
+</style>
+<div id="map-canvas"></div>
